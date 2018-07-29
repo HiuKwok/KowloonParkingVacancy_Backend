@@ -12,7 +12,7 @@ function fetchCarparkNamePair (data){
 
     let carParkNamePair = new Map();
 
-    for (let i of data){
+    for (let i of data.results){
         //console.log(i.park_Id, " ", i.name)
         carParkNamePair.set(i.park_Id, i.name)
     }
@@ -28,7 +28,7 @@ function fetchCarparkNamePair (data){
 function fetchvacancyData (data){
 
     let vacancies = new Map ();
-    for (let i of data){
+    for (let i of data.results){
          // console.log(i.park_Id, " ", i.privateCar[0].vacancy, " ", i.privateCar[0].lastupdate)
         vacancies.set(i.park_Id, {
             "space" : i.privateCar[0].vacancy,
