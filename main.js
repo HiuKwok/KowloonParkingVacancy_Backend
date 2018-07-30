@@ -1,6 +1,7 @@
 
 const fs = require('fs');
 const request = require('request');
+const rp = require('request-promise');
 const parser = require('./Logic/JSONStripper')
 
 function logMapElements(value, key, map) {
@@ -24,19 +25,18 @@ function logMapElements(value, key, map) {
 let url_carpark_name = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=info&lang=zh_TW&vehicleTypes=privateCar';
 let url_carpark_vancay = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=vacancy&lang=zh_TW&vehicleTypes=privateCar';
 
-request.get(url_carpark_name, {json:true}, (err, _, body) => {
-    //Reformat
-    let parkingmap = parser.fetchCarparkNamePair(body);
 
-    console.log(parkingmap);
+//Issue both get call same time
+const p = rp.get(url_carpark_name, {json:true});
+const p2 = rp.get(url_carpark_vancay, {json:true});
 
-    request.get( url_carpark_vancay, {json:true}, (err, _, body) => {
-        let vacancy = parser.fetchvacancyData(body);
-        console.log(body);
-        let re = parser.groupData(parkingmap, vacancy);
 
-        //Sd to response.
-    });
-});
+//Wait for both call return
+Promise.all([p, p2]).then((v) => {
 
+    let parking = parser.fetchCarparkNamePair(v[0]);
+    let vacancy = parser.fetchvacancyData(v[1]);
+    let re = parser.groupData(parking, vacancy);
+    console.log(re);
+})
 
