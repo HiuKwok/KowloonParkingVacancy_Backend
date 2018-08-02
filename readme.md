@@ -11,7 +11,7 @@ It provides two options which is data || vacancy respectively. However by retrie
 have ParkingID instead of the full name. How the hell I know what does parking id:10 stand for????? huh???? 
  
 
-####Infrastructure 
+#### Infrastructure 
 
 * So by solving all above problem, this project is made. First DB is introduced to store all the vacancy data,   
 which is the original API lack of. Endpoint would be open at the later stage of project to allow user to query historical vacancy data,   
@@ -31,6 +31,6 @@ But it's still a nature of demo.
     * background process would fetch update from Gov API and feed dat into DB periodically. 
 
 
-####Usage
+#### Usage
 
-####Contribution guide
+#### Contribution guide
