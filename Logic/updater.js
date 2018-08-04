@@ -79,7 +79,7 @@ function getCarparkInfo (v, name_cn, name_en) {
 /**
  * Only add when exist map not found
  */
-function gpInsert (existCarpark, newcarpark) {
+function gpInsert (client, existCarpark, newcarpark) {
 
     let insertion = new Array();
     //Insert && update

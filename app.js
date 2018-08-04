@@ -71,7 +71,7 @@ app.post('/carparks', function (req, res) {
         let name_cn = up.getNameMap(v[2]);
         let name_en = up.getNameMap(v[3]);
         let newcarpark = up.getCarparkInfo(v[1], name_cn, name_en);
-        let insertion = up.gpInsert(existCarpark, newcarpark);
+        let insertion = up.gpInsert(client, existCarpark, newcarpark);
 
         Promise.all([...insertion]).then( () =>{
             //console.log("Insertion size:" + insertion.length)
