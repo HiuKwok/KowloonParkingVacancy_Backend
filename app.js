@@ -13,7 +13,7 @@ const url_carpark_name = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=i
 const url_carpark_name_cn = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=info&lang=zh_CN';
 const url_carpark_name_en = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=info&lang=en_US';
 const checkExist = 'SELECT DISTINCT id FROM carpark';
-
+const checkExist_vacancy = 'select id, extract(epoch  from max(ts) ) as ts from vacancy group by id;';
 
 app.get('/carparks', function (req, res) {
 
@@ -79,6 +79,35 @@ app.post('/carparks', function (req, res) {
             client.end();
             console.log("All promise done");
         });
+    });
+    res.status(200);
+    res.end();
+});
+
+
+app.post('/vacancy', function (req, res) {
+    const url_carpark_vancay = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=vacancy&lang=zh_TW&vehicleTypes=privateCar';
+    const client = new pg.Client(connectionString);
+    const con = client.connect();
+
+    const p2 = rp.get(url_carpark_vancay, {json:true});
+
+    con.then( () => {
+        console.log("Hello connect");
+        //Fetch existing
+        const v_exist = client.query(checkExist_vacancy);
+
+        Promise.all([v_exist, p2]).then((v) => {
+            let exist = up.resultToMap(v[0]);
+            console.log(exist);
+            let recordToIn = up.needToInsert(client, v[1], exist);
+            console.log(recordToIn);
+            Promise.all([...recordToIn]).then((v) => {
+                console.log("Insertion size: ", recordToIn.length);
+                client.end();
+            });
+        });
+
     });
     res.status(200);
     res.end();

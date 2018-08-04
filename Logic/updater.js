@@ -8,7 +8,7 @@ const url_carpark_name_cn = 'https://api.data.gov.hk/v1/carpark-info-vacancy?dat
 const url_carpark_name_en = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=info&lang=en_US';
 const stmt = 'INSERT INTO carpark(id, name_zh, name_cn, name_en, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6) RETURNING *';
 const checkExist = 'SELECT DISTINCT id FROM carpark';
-
+const stmt_insert_vacancy = 'INSERT INTO vacancy(id, ts, available, cartype) VALUES($1, $2, $3, $4) RETURNING *';
 
 function upcarpark (client) {
 
@@ -94,9 +94,43 @@ function gpInsert (existCarpark, newcarpark) {
     return insertion;
 }
 
+
+
+function resultToMap(r) {
+    let exist = new Map();
+    r.rows.forEach( v => {
+        exist.set(v.id, v.ts);
+
+    });
+    return exist;
+}
+
+
+function needToInsert (client, r, exist) {
+
+    let insertion = new Array();
+    r.results.forEach( i => {
+        const values = [i.park_Id,  new Date(i.privateCar[0].lastupdate), i.privateCar[0].vacancy, "privateCar"];
+
+        //Really bad
+        let curts = (new Date(i.privateCar[0].lastupdate).getTime()/1000)+28800;
+
+        //Only insert when not match
+        if (!exist.has(i.park_Id) || (exist.has(i.park_Id) && curts != exist.get(i.park_Id) ) ){
+            // console.log( (exist.has(i.park_Id) && curts != exist.get(i.park_Id) ));
+            let pro = client.query(stmt_insert_vacancy, values);
+            insertion.push(pro);
+        }
+    });
+    return insertion;
+}
+
+
 module.exports = {
     upcarpark: upcarpark,
     getNameMap: getNameMap,
     getCarparkInfo: getCarparkInfo,
-    gpInsert: gpInsert
+    gpInsert: gpInsert,
+    resultToMap: resultToMap,
+    needToInsert: needToInsert
 }
