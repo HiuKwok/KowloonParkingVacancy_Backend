@@ -114,6 +114,33 @@ app.post('/vacancy', function (req, res) {
 });
 
 
+function updateVacancy () {
+    const url_carpark_vancay = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=vacancy&lang=zh_TW&vehicleTypes=privateCar';
+    const client = new pg.Client(connectionString);
+    const con = client.connect();
+
+    const p2 = rp.get(url_carpark_vancay, {json:true});
+
+    con.then( () => {
+        console.log("Hello connect");
+        //Fetch existing
+        const v_exist = client.query(checkExist_vacancy);
+
+        Promise.all([v_exist, p2]).then((v) => {
+            let exist = up.resultToMap(v[0]);
+            let recordToIn = up.needToInsert(client, v[1], exist);
+            Promise.all([...recordToIn]).then((v) => {
+                console.log("Insertion size: ", recordToIn.length);
+                client.end();
+            });
+        });
+
+    });
+}
+
+//Really really bad (temp setup)
+setInterval(updateVacancy, 1000*60*5);
+
 
 app.listen(3000, function (req, res) {
     //Set header to JSON format(REST API)
