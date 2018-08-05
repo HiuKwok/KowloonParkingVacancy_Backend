@@ -112,14 +112,15 @@ function needToInsert (client, r, exist) {
     r.results.forEach( i => {
         const values = [i.park_Id,  new Date(i.privateCar[0].lastupdate), i.privateCar[0].vacancy, "privateCar"];
 
-        //Really bad
-        let curts = (new Date(i.privateCar[0].lastupdate).getTime()/1000)+28800;
+        //HKG == +8?
+        let offSet = (-1) * new Date().getTimezoneOffset() * 60000;
+        let tsInMs = (new Date(i.privateCar[0].lastupdate).getTime() + offSet) /1000;
 
         //Only insert when not match
-        if (!exist.has(i.park_Id) || (exist.has(i.park_Id) && curts != exist.get(i.park_Id) ) ){
-            // console.log( (exist.has(i.park_Id) && curts != exist.get(i.park_Id) ));
-            let pro = client.query(stmt_insert_vacancy, values);
-            insertion.push(pro);
+        if (!exist.has(i.park_Id) || (exist.has(i.park_Id) && tsInMs != exist.get(i.park_Id) ) ){
+            console.log("Insert new vacancy record on [", i.park_Id, "]",  exist.get(i.park_Id), " -> ",  tsInMs);
+           let pro = client.query(stmt_insert_vacancy, values);
+           insertion.push(pro);
         }
     });
     return insertion;
