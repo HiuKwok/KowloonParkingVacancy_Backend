@@ -77,8 +77,7 @@ app.post('/carparks', function (req, res) {
             //console.log("Insertion size:" + insertion.length)
             //All promise done
             client.end();
-            console.log("All promise done");
-        });
+        }, () => {client.end();} );
     });
     res.status(200);
     res.end();
@@ -105,8 +104,8 @@ app.post('/vacancy', function (req, res) {
             Promise.all([...recordToIn]).then((v) => {
                 console.log("Insertion size: ", recordToIn.length);
                 client.end();
-            });
-        });
+            }, () => {client.end();});
+        }, () => {client.end();} );
 
     });
     res.status(200);
@@ -133,7 +132,7 @@ function updateVacancy () {
                 console.log("Insertion size: ", recordToIn.length);
                 client.end();
             });
-        });
+        }, () => {client.end();}  );
 
     });
 }
