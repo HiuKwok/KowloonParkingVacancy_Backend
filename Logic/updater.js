@@ -4,16 +4,23 @@
 const rp = require('request-promise');
 
 
-const carparkEndpoint = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=info';
+const carparkEndpoint = 'https://api.data.gov.hk/v1/carpark-info-vacancy';
+const carparkInfo = carparkEndpoint + '?data=info';
+const carparkVacancy =   carparkEndpoint + '?data=vacancy';
 //URL class is hard to apply in this case, as only one para need to be set take String concat instead.
-const carparkInfoEn = carparkEndpoint + "&lang=en_US";
-const carparkInfoZh = carparkEndpoint + "&lang=zh_TW";
-const carparkInfoCn = carparkEndpoint + "&lang=zh_CN";
+const carparkInfoEn = carparkInfo + "&lang=en_US";
+const carparkInfoZh = carparkInfo + "&lang=zh_TW";
+const carparkInfoCn = carparkInfo + "&lang=zh_CN";
 //As ORM is used on this project, data would be retrieved by plain SQL
 //TBC: Use query builder instead
 const sqlInsertCarPark = 'INSERT INTO carpark(id, name_zh, name_cn, name_en, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6) RETURNING *';
 const sqlInsertVacancy = 'INSERT INTO vacancy(id, ts, available, cartype) VALUES($1, $2, $3, $4) RETURNING *';
 const sqlSelectCarparkID = 'SELECT DISTINCT id FROM carpark';
+const sqlSelectLatestVacancyTS = 'select id, extract(epoch  from max(ts) ) as ts from vacancy group by id;';
+
+
+//TBC: Single method to return a promise for Update Carpark info from Gov endpoint
+//TBC: Single method to return a promise for updaing DB vacancy table.
 
 function upcarpark (client) {
 
@@ -138,5 +145,18 @@ module.exports = {
     getCarparkInfo: getCarparkInfo,
     gpInsert: gpInsert,
     resultToMap: resultToMap,
-    needToInsert: needToInsert
+    needToInsert: needToInsert,
+
+//    Expose Endpoint for app.js to use atm (temparory)
+    carparkVacancy: carparkVacancy,
+     carparkInfoEn: carparkInfoEn,
+     carparkInfoZh: carparkInfoZh,
+     carparkInfoCn: carparkInfoCn,
+//    So as SQL query
+    sqlInsertCarPark: sqlInsertCarPark,
+    sqlInsertVacancy: sqlInsertVacancy,
+    sqlSelectCarparkID: sqlSelectCarparkID,
+    sqlSelectLatestVacancyTS: sqlSelectLatestVacancyTS
+
+
 }
