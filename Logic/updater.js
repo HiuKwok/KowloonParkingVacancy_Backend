@@ -3,19 +3,24 @@
 * */
 const rp = require('request-promise');
 
-const url_carpark_name = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=info&lang=zh_TW';
-const url_carpark_name_cn = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=info&lang=zh_CN';
-const url_carpark_name_en = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=info&lang=en_US';
-const stmt = 'INSERT INTO carpark(id, name_zh, name_cn, name_en, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6) RETURNING *';
-const checkExist = 'SELECT DISTINCT id FROM carpark';
-const stmt_insert_vacancy = 'INSERT INTO vacancy(id, ts, available, cartype) VALUES($1, $2, $3, $4) RETURNING *';
+
+const carparkEndpoint = 'https://api.data.gov.hk/v1/carpark-info-vacancy?data=info';
+//URL class is hard to apply in this case, as only one para need to be set take String concat instead.
+const carparkInfoEn = carparkEndpoint + "&lang=en_US";
+const carparkInfoZh = carparkEndpoint + "&lang=zh_TW";
+const carparkInfoCn = carparkEndpoint + "&lang=zh_CN";
+//As ORM is used on this project, data would be retrieved by plain SQL
+//TBC: Use query builder instead
+const sqlInsertCarPark = 'INSERT INTO carpark(id, name_zh, name_cn, name_en, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6) RETURNING *';
+const sqlInsertVacancy = 'INSERT INTO vacancy(id, ts, available, cartype) VALUES($1, $2, $3, $4) RETURNING *';
+const sqlSelectCarparkID = 'SELECT DISTINCT id FROM carpark';
 
 function upcarpark (client) {
 
-    const p = rp.get(url_carpark_name, {json:true});
-    const p2 = rp.get(url_carpark_name_cn, {json:true});
-    const p3 = rp.get(url_carpark_name_en, {json:true});
-    const p_exist = client.query(checkExist);
+    const p = rp.get(carparkInfoEn, {json:true});
+    const p2 = rp.get(carparkInfoCn, {json:true});
+    const p3 = rp.get(carparkInfoZh, {json:true});
+    const p_exist = client.query(sqlSelectCarparkID);
 
     Promise.all([p_exist, p, p2, p3]).then((v) => {
         //Exist
@@ -37,7 +42,7 @@ function upcarpark (client) {
 }
 
 function fetchExistCarPark (client) {
-    const p_exist = client.query(checkExist);
+    const p_exist = client.query(sqlSelectCarparkID);
 }
 
 /**
@@ -87,7 +92,7 @@ function gpInsert (client, existCarpark, newcarpark) {
         let item = newcarpark[i];
         if(!existCarpark.has(item.id)) {
             const values = [item.id, item.name_zh, item.name_cn, item.name_en, item.latitude, item.longitude];
-            let pro = client.query(stmt, values);
+            let pro = client.query(sqlInsertCarPark, values);
             insertion.push(pro);
         }
     }
@@ -119,7 +124,7 @@ function needToInsert (client, r, exist) {
         //Only insert when not match
         if (!exist.has(i.park_Id) || (exist.has(i.park_Id) && tsInMs != exist.get(i.park_Id) ) ){
             console.log("Insert new vacancy record on [", i.park_Id, "]",  exist.get(i.park_Id), " -> ",  tsInMs);
-           let pro = client.query(stmt_insert_vacancy, values);
+           let pro = client.query(sqlInsertVacancy, values);
            insertion.push(pro);
         }
     });
