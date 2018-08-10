@@ -18,39 +18,20 @@ const sqlInsertVacancy = 'INSERT INTO vacancy(id, ts, available, cartype) VALUES
 const sqlSelectCarparkID = 'SELECT DISTINCT id FROM carpark';
 const sqlSelectLatestVacancyTS = 'select id, extract(epoch  from max(ts) ) as ts from vacancy group by id;';
 
+/*
+* Convert a given sql result into set.
+* */
+function rowsToSet (value) {
 
-//TBC: Single method to return a promise for Update Carpark info from Gov endpoint
-//TBC: Single method to return a promise for updaing DB vacancy table.
+    let distinctSet = new Set();
+    //Take ID only
+    value.rows.forEach(v=> {
+        distinctSet.add(v.id);
+    })
 
-function upcarpark (client) {
-
-    const p = rp.get(carparkInfoEn, {json:true});
-    const p2 = rp.get(carparkInfoCn, {json:true});
-    const p3 = rp.get(carparkInfoZh, {json:true});
-    const p_exist = client.query(sqlSelectCarparkID);
-
-    Promise.all([p_exist, p, p2, p3]).then((v) => {
-        //Exist
-        let existCarpark = new Set();
-
-        v[0].rows.forEach(v=> {
-            existCarpark.add(v.id);
-        })
-        console.log(existCarpark);
-
-        //New
-        let name_cn = getNameMap(v[2]);
-        let name_en = getNameMap(v[3]);
-        let newcarpark = getCarparkInfo(v[1], name_cn, name_en);
-        let insertion = gpInsert(existCarpark, newcarpark);
-
-        return [...insertion];
-    });
+    return distinctSet;
 }
 
-function fetchExistCarPark (client) {
-    const p_exist = client.query(sqlSelectCarparkID);
-}
 
 /**
  * Receive a promise and
@@ -63,6 +44,80 @@ function getNameMap (result) {
     return namePair;
 }
 
+/**
+ * Perform upsert operation on table carpark, only insert when it's not exist in DB.
+ * @param client
+ * @param existCarpark
+ * @param newcarpark
+ * @returns {any[]}
+ */
+function gpInsert (client, existCarpark, newcarpark) {
+
+    let insertion = new Array();
+    //Insert && update
+    newcarpark.forEach( item => {
+        if(!existCarpark.has(item.id)) {
+            const values = [item.id, item.name_zh, item.name_cn, item.name_en, item.latitude, item.longitude];
+            let pro = client.query(sqlInsertCarPark, values);
+            insertion.push(pro);
+        }
+    });
+    return insertion;
+}
+
+
+
+function updateCarparkInfo(client){
+
+    return new Promise( (resolve, reject) => {
+        const pZH = rp.get(carparkInfoZh, {json:true});
+        const pCN = rp.get(carparkInfoCn, {json:true});
+        const pEN = rp.get(carparkInfoEn, {json:true});
+        const pExistRecord = client.query(sqlSelectCarparkID);
+
+        Promise.all([pExistRecord, pZH, pCN, pEN]).then((v) => {
+
+            //Fetch exist car-park ID from DB
+            let existCarpark = rowsToSet(v[0]);
+            //Fetch latest list from Gov
+            let newcarpark = getCarparkInfo(v[1], v[2], v[3]);
+            //Perform upsert operation
+            let insertion = gpInsert(client, existCarpark, newcarpark);
+
+            Promise.all([...insertion]).then( () =>{
+                console.log("Insertion size:" + insertion.length);
+                resolve(insertion.length);
+                //All promise done
+                //client.end();
+            }, () => {reject("Insertion fail")} );
+        }, () => {reject("Fetch info fail")} );
+    });
+}
+
+function updateVacancyInfo (client){
+
+    return new Promise ( (resolve, reject) => {
+
+        //Fetch from Gov Endpoint
+        const p2 = rp.get(carparkVacancy, {json:true});
+        //Fetch existing
+        const v_exist = client.query(sqlSelectLatestVacancyTS);
+
+        Promise.all([v_exist, p2]).then((v) => {
+
+            let exist = resultToMap(v[0]);
+            let recordToIn = needToInsert(client, v[1], exist);
+
+            Promise.all([...recordToIn]).then((v) => {
+                resolve(recordToIn.length);
+
+            }, () => {reject("Insertion fail")} );
+        }, () => {reject("Fetch info fail")} );
+    });
+
+}
+
+
 
 /**
  * Group multiple parking spot info
@@ -71,7 +126,11 @@ function getNameMap (result) {
  * @param name_en
  * @returns {any[]}
  */
-function getCarparkInfo (v, name_cn, name_en) {
+function getCarparkInfo (v, v_cn, v_en) {
+
+    let name_cn = getNameMap(v_cn);
+    let name_en = getNameMap(v_en);
+
     let newcarpark = new Array();
     let r = v.results;
     r.forEach( record => {
@@ -86,24 +145,6 @@ function getCarparkInfo (v, name_cn, name_en) {
         newcarpark.push(i);
     })
     return newcarpark;
-}
-
-/**
- * Only add when exist map not found
- */
-function gpInsert (client, existCarpark, newcarpark) {
-
-    let insertion = new Array();
-    //Insert && update
-    for (let i=0 ; i<newcarpark.length ; i++){
-        let item = newcarpark[i];
-        if(!existCarpark.has(item.id)) {
-            const values = [item.id, item.name_zh, item.name_cn, item.name_en, item.latitude, item.longitude];
-            let pro = client.query(sqlInsertCarPark, values);
-            insertion.push(pro);
-        }
-    }
-    return insertion;
 }
 
 
@@ -140,23 +181,14 @@ function needToInsert (client, r, exist) {
 
 
 module.exports = {
-    upcarpark: upcarpark,
-    getNameMap: getNameMap,
-    getCarparkInfo: getCarparkInfo,
-    gpInsert: gpInsert,
-    resultToMap: resultToMap,
-    needToInsert: needToInsert,
+    updateCarparkInfo: updateCarparkInfo,
+    updateVacancyInfo: updateVacancyInfo,
+
 
 //    Expose Endpoint for app.js to use atm (temparory)
     carparkVacancy: carparkVacancy,
      carparkInfoEn: carparkInfoEn,
      carparkInfoZh: carparkInfoZh,
      carparkInfoCn: carparkInfoCn,
-//    So as SQL query
-    sqlInsertCarPark: sqlInsertCarPark,
-    sqlInsertVacancy: sqlInsertVacancy,
-    sqlSelectCarparkID: sqlSelectCarparkID,
-    sqlSelectLatestVacancyTS: sqlSelectLatestVacancyTS
-
 
 }
