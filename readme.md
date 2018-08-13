@@ -10,6 +10,24 @@ first it's really slow, it takes like 2s up for a get call. The second one which
 It provides two options which is data || vacancy respectively. However by retrieving the vacancy data it would only
 have ParkingID instead of the full name. How the hell I know what does parking id:10 stand for????? huh???? 
  
+#### News
+
+* This project is up on AWS at the moment for testing purpose, node application on EC2 and Postgre on RDS.
+    * ec2-18-179-111-191.ap-northeast-1.compute.amazonaws.com:3000
+
+#### Endpoint option
+* `GET /carparks`
+    * Return a JSON result which composite of Carpark Info && Vacancy Info over Gov endpoint.
+    * Gonna be slow it take like 2-3s -> this is motivation for this project as well. 
+* `GET /vacancy`
+    * Return a similar response as above, but getting data from DB instead, which would like 100-200ms 
+    at the moment. Schedule task would update vacancy db periodically. 
+
+* `POST /carparks`
+    * Instruct the node app to update carpark meta list from Gov src.
+
+* `POST /vacancy`
+    * Instruct the node app to update vacancy data from Gov src.
 
 #### Infrastructure 
 
