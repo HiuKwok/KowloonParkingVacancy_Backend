@@ -11,6 +11,7 @@ let limitCount = 10;
 
 const connectionString = config.connectionString;
 
+const sqlSelectLatestVacancyFull = 'SELECT c.name_en, c.name_zh, c.name_cn, extract(epoch FROM MAX(v.ts) ) FROM vacancy v JOIN carpark c on v.id = c.id GROUP BY c.id, c.name_en, c.name_zh, c.name_cn ';
 
 app.get('/carparks', function (req, res) {
 
@@ -42,6 +43,24 @@ app.get('/carparks', function (req, res) {
     }
 
 });
+
+
+
+app.get('/vacancy', function (req, res) {
+    const client = new pg.Client(connectionString);
+    client.connect();
+
+
+    up.getVacancyInfo(client)
+        .then( (data) => {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(data) );
+        })
+        .catch(util.onRejectPrintMsg)
+        .then(() => { client.end();});
+});
+
+
 
 app.post('/carparks', function (req, res) {
 
@@ -91,8 +110,7 @@ function updateVacancy () {
 }
 
 //Really really bad (temp setup)
-setInterval(updateVacancy, 1000*2);
-
+ setInterval(updateVacancy, 1000*60*10);
 
 app.listen(3000, function (req, res) {
     //Set header to JSON format(REST API)

@@ -17,7 +17,7 @@ const sqlInsertCarPark = 'INSERT INTO carpark(id, name_zh, name_cn, name_en, lon
 const sqlInsertVacancy = 'INSERT INTO vacancy(id, ts, available, cartype) VALUES($1, $2, $3, $4) RETURNING *';
 const sqlSelectCarparkID = 'SELECT DISTINCT id FROM carpark';
 const sqlSelectLatestVacancyTS = 'select id, extract(epoch  from max(ts) ) as ts from vacancy group by id;';
-
+const sqlSelectLatestVacancyFull = 'SELECT c.name_en, c.name_zh, c.name_cn, extract(epoch FROM MAX(v.ts) ) FROM vacancy v JOIN carpark c on v.id = c.id GROUP BY c.id, c.name_en, c.name_zh, c.name_cn ';
 /*
 * Convert a given sql result into set.
 * */
@@ -64,6 +64,22 @@ function gpInsert (client, existCarpark, newcarpark) {
     });
     return insertion;
 }
+
+function getVacancyInfo (client) {
+
+    return new Promise ( (resolve, reject) => {
+
+        const p = client.query(sqlSelectLatestVacancyFull);
+        p.then ( v => {
+            v.rows.forEach( item => {
+                item.date_part = new Date(item.date_part*1000);
+            })
+            resolve(v.rows);
+
+        }, (err) => { console.log(err)});
+    } );
+}
+
 
 
 
@@ -180,9 +196,13 @@ function needToInsert (client, r, exist) {
 }
 
 
+
+
+
 module.exports = {
     updateCarparkInfo: updateCarparkInfo,
     updateVacancyInfo: updateVacancyInfo,
+    getVacancyInfo: getVacancyInfo,
 
 
 //    Expose Endpoint for app.js to use atm (temparory)
