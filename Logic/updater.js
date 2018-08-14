@@ -17,6 +17,7 @@ const sqlInsertCarPark = 'INSERT INTO carpark(id, name_zh, name_cn, name_en, lon
 const sqlInsertVacancy = 'INSERT INTO vacancy(id, ts, available, cartype) VALUES($1, $2, $3, $4) RETURNING *';
 const sqlSelectCarparkID = 'SELECT DISTINCT id FROM carpark';
 const sqlSelectLatestVacancyTS = 'select id, extract(epoch  from max(ts) ) as ts from vacancy group by id;';
+const sqlSelectLatestVacancySelected = 'SELECT c.name_en, c.name_zh, c.name_cn, v.id, extract(epoch FROM v.ts)  as ts FROM ( SELECT vacancy.id id , max(ts) as ts from vacancy WHERE id = $1 group by id ) v JOIN carpark c on v.id = c.id ';
 const sqlSelectLatestVacancyFull = 'SELECT c.name_en, c.name_zh, c.name_cn, v.id, extract(epoch FROM v.ts)  as ts FROM ( SELECT vacancy.id id , max(ts) as ts  from vacancy group by id ) v JOIN carpark c on v.id = c.id' ;
 /*
 * Convert a given sql result into set.
@@ -66,7 +67,6 @@ function gpInsert (client, existCarpark, newcarpark) {
 }
 
 function getVacancyInfo (client) {
-
     return new Promise ( (resolve, reject) => {
 
         const p = client.query(sqlSelectLatestVacancyFull);
@@ -80,7 +80,19 @@ function getVacancyInfo (client) {
     } );
 }
 
+function getVacancyInfoByID (client, id) {
+    return new Promise ( (resolve, reject) => {
 
+        const p = client.query(sqlSelectLatestVacancySelected, [id]);
+        p.then ( v => {
+            v.rows.forEach( item => {
+                item.ts = new Date(item.ts*1000);
+            })
+            resolve(v.rows);
+
+        }, (err) => { console.log(err)});
+    } );
+}
 
 
 function updateCarparkInfo(client){
@@ -203,6 +215,7 @@ module.exports = {
     updateCarparkInfo: updateCarparkInfo,
     updateVacancyInfo: updateVacancyInfo,
     getVacancyInfo: getVacancyInfo,
+    getVacancyInfoByID: getVacancyInfoByID,
 
 
 //    Expose Endpoint for app.js to use atm (temparory)

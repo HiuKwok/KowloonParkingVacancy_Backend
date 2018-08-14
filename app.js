@@ -11,8 +11,6 @@ let limitCount = 10;
 
 const connectionString = config.connectionString;
 
-const sqlSelectLatestVacancyFull = 'SELECT c.name_en, c.name_zh, c.name_cn, extract(epoch FROM MAX(v.ts) ) FROM vacancy v JOIN carpark c on v.id = c.id GROUP BY c.id, c.name_en, c.name_zh, c.name_cn ';
-
 app.get('/carparks', function (req, res) {
 
     //Only resolve request when limitCount >0
@@ -44,6 +42,21 @@ app.get('/carparks', function (req, res) {
 
 });
 
+
+
+app.get('/carparks/:id', function (req, res) {
+
+    const client = new pg.Client(connectionString);
+    client.connect();
+    //TBC: Need to validate data first
+    up.getVacancyInfoByID(client, req.params.id)
+        .then( (data) => {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(data) );
+        })
+        .catch(util.onRejectPrintMsg)
+        .then(() => { client.end();});
+});
 
 
 app.get('/vacancy', function (req, res) {
