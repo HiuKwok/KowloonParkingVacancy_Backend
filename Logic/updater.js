@@ -17,7 +17,7 @@ const sqlInsertCarPark = 'INSERT INTO carpark(id, name_zh, name_cn, name_en, lon
 const sqlInsertVacancy = 'INSERT INTO vacancy(id, ts, available, cartype) VALUES($1, $2, $3, $4) RETURNING *';
 const sqlSelectCarparkID = 'SELECT DISTINCT id FROM carpark';
 const sqlSelectLatestVacancyTS = 'select id, extract(epoch  from max(ts) ) as ts from vacancy group by id;';
-const sqlSelectLatestVacancyFull = 'SELECT c.name_en, c.name_zh, c.name_cn, extract(epoch FROM MAX(v.ts) ) as ts, v.available  FROM vacancy v JOIN carpark c on v.id = c.id GROUP BY c.id, c.name_en, c.name_zh, c.name_cn, v.available ';
+const sqlSelectLatestVacancyFull = 'SELECT c.name_en, c.name_zh, c.name_cn, v.id, extract(epoch FROM v.ts)  as ts FROM ( SELECT vacancy.id id , max(ts) as ts  from vacancy group by id ) v JOIN carpark c on v.id = c.id' ;
 /*
 * Convert a given sql result into set.
 * */
