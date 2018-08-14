@@ -17,7 +17,7 @@ const sqlInsertCarPark = 'INSERT INTO carpark(id, name_zh, name_cn, name_en, lon
 const sqlInsertVacancy = 'INSERT INTO vacancy(id, ts, available, cartype) VALUES($1, $2, $3, $4) RETURNING *';
 const sqlSelectCarparkID = 'SELECT DISTINCT id FROM carpark';
 const sqlSelectLatestVacancyTS = 'select id, extract(epoch  from max(ts) ) as ts from vacancy group by id;';
-const sqlSelectLatestVacancyFull = 'SELECT c.name_en, c.name_zh, c.name_cn, extract(epoch FROM MAX(v.ts) ) FROM vacancy v JOIN carpark c on v.id = c.id GROUP BY c.id, c.name_en, c.name_zh, c.name_cn ';
+const sqlSelectLatestVacancyFull = 'SELECT c.name_en, c.name_zh, c.name_cn, extract(epoch FROM MAX(v.ts) ) as ts, v.available  FROM vacancy v JOIN carpark c on v.id = c.id GROUP BY c.id, c.name_en, c.name_zh, c.name_cn, v.available ';
 /*
 * Convert a given sql result into set.
 * */
@@ -72,7 +72,7 @@ function getVacancyInfo (client) {
         const p = client.query(sqlSelectLatestVacancyFull);
         p.then ( v => {
             v.rows.forEach( item => {
-                item.date_part = new Date(item.date_part*1000);
+                item.ts = new Date(item.ts*1000);
             })
             resolve(v.rows);
 
