@@ -7,7 +7,22 @@ const parser = require('./Logic/JSONStripper')
 const util = require('./Logic/util')
 const exUtil = require('./util/exUtil')
 const config = require('./config/main')
-var app = express();
+const  compression = require('compression')
+
+const app = express();
+//Middle ware
+
+//Exclude those request what explicitly ask for no compression.
+app.use(compression({filter: shouldZip}));
+
+function shouldZip (req, res) {
+    if (req.headers['x-no-compression']) {
+        return false;
+    }
+    // fallback to standard filter function
+    return compression.filter(req, res);
+}
+
 
 const connectionString = config.connectionString;
 

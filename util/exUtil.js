@@ -26,6 +26,7 @@ function stdResponse200 (res, content) {
 }
 
 
+
 module.exports = {
     stdResponse201: stdResponse201,
     stdResponse404: stdResponse404,
