@@ -13,17 +13,11 @@ const methodOverride = require('method-override')
 const app = express();
 //Middle ware
 //Exclude those request what explicitly ask for no compression.
-app.use(compression({filter: shouldZip}));
+app.use(compression({filter: exUtil.shouldZip}));
 //Any POST call in would check override field
 app.use(methodOverride('X-HTTP-Method-Override'));
-
-function shouldZip (req, res) {
-    if (req.headers['x-no-compression']) {
-        return false;
-    }
-    // fallback to standard filter function
-    return compression.filter(req, res);
-}
+//POST need to be JSON format
+app.use(exUtil.checkCType);
 
 
 const connectionString = config.connectionString;
