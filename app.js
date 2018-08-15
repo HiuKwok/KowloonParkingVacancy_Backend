@@ -7,7 +7,6 @@ const parser = require('./Logic/JSONStripper')
 const util = require('./Logic/util')
 const config = require('./config/main')
 var app = express();
-let limitCount = 10;
 
 const connectionString = config.connectionString;
 
@@ -17,41 +16,18 @@ const pool = new pg.Pool({
 })
 
 
-
 app.get('/carparks', function (req, res) {
-
-    //Only resolve request when limitCount >0
-    if (limitCount > 0) {
-        //Decrement no matter ajax success or not
-        limitCount--;
-
-        res.setHeader('Content-Type', 'application/json');
-
-        //Issue both get call same time
-        const p = rp.get(up.carparkInfoZh, {json:true});
-        const p2 = rp.get(up.carparkVacancy, {json:true});
-
-        //Wait for both call return
-        Promise.all([p, p2]).then((v) => {
-
-            let parking = parser.fetchCarparkNamePair(v[0]);
-            let vacancy = parser.fetchvacancyData(v[1]);
-            let re = parser.groupData(parking, vacancy);
-            //Sd to response.
-            res.end(JSON.stringify(re) );
-            console.log(re);
+    up.getVacancyInfo(pool)
+        .then( (data) => {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(data) );
         })
-
-    }else {
-        res.status(403);
-        res.end();
-    }
+        .catch(util.onRejectPrintMsg);
 
 });
 
 
 app.get('/carparks/:id', function (req, res) {
-
     up.getVacancyInfoByID(pool, req.params.id)
         .then( (data) => {
             res.setHeader('Content-Type', 'application/json');
@@ -62,17 +38,17 @@ app.get('/carparks/:id', function (req, res) {
 
 
 app.get('/vacancy', function (req, res) {
-    const client = new pg.Client(connectionString);
-    client.connect();
-
-
-    up.getVacancyInfo(client)
+    up.getInfoFromGov()
         .then( (data) => {
             res.setHeader('Content-Type', 'application/json');
+            res.status(200);
             res.end(JSON.stringify(data) );
         })
-        .catch(util.onRejectPrintMsg)
-        .then(() => { client.end();});
+        .catch( (err) => {
+            util.onRejectPrintMsg(err);
+            res.status(500);
+            res.end();
+        });
 });
 
 

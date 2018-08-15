@@ -2,7 +2,7 @@
 * Feed data into DB by API Get call from Gov src.
 * */
 const rp = require('request-promise');
-
+const parser = require('./JSONStripper')
 
 const carparkEndpoint = 'https://api.data.gov.hk/v1/carpark-info-vacancy';
 const carparkInfo = carparkEndpoint + '?data=info';
@@ -64,6 +64,24 @@ function gpInsert (client, existCarpark, newcarpark) {
         }
     });
     return insertion;
+}
+
+function getInfoFromGov () {
+    return new Promise ( (resolve, reject) => {
+
+        //Issue both get call same time
+        const p = rp.get(carparkInfoZh, {json:true});
+        const p2 = rp.get(carparkVacancy, {json:true});
+
+        //Wait for both call return
+        Promise.all([p, p2]).then((v) => {
+
+            let parking = parser.fetchCarparkNamePair(v[0]);
+            let vacancy = parser.fetchvacancyData(v[1]);
+            let re = parser.groupData(parking, vacancy);
+            resolve(re);
+        }, () => {reject("Fetch info fail")} );
+    });
 }
 
 function getVacancyInfo (client) {
@@ -216,6 +234,7 @@ module.exports = {
     updateVacancyInfo: updateVacancyInfo,
     getVacancyInfo: getVacancyInfo,
     getVacancyInfoByID: getVacancyInfoByID,
+    getInfoFromGov: getInfoFromGov,
 
 
 //    Expose Endpoint for app.js to use atm (temparory)
