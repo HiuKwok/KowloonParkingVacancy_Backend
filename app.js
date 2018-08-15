@@ -7,13 +7,15 @@ const parser = require('./Logic/JSONStripper')
 const util = require('./Logic/util')
 const exUtil = require('./util/exUtil')
 const config = require('./config/main')
-const  compression = require('compression')
+const compression = require('compression')
+const methodOverride = require('method-override')
 
 const app = express();
 //Middle ware
-
 //Exclude those request what explicitly ask for no compression.
 app.use(compression({filter: shouldZip}));
+//Any POST call in would check override field
+app.use(methodOverride('X-HTTP-Method-Override'));
 
 function shouldZip (req, res) {
     if (req.headers['x-no-compression']) {
