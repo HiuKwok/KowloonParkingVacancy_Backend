@@ -11,6 +11,9 @@ const compression = require('compression')
 const methodOverride = require('method-override')
 
 const app = express();
+
+
+
 //Middle ware
 //Exclude those request what explicitly ask for no compression.
 app.use(compression({filter: exUtil.shouldZip}));
@@ -18,7 +21,9 @@ app.use(compression({filter: exUtil.shouldZip}));
 app.use(methodOverride('X-HTTP-Method-Override'));
 //POST need to be JSON format
 app.use(exUtil.checkCType);
-
+//Json
+app.use(express.json());
+app.use(exUtil.malformedJsonHandler);
 
 const connectionString = config.connectionString;
 
@@ -68,6 +73,7 @@ app.get('/vacancy', function (req, res) {
 
 app.post('/carparks', function (req, res) {
 
+    console.log('request =' + JSON.stringify(req.body));
     //Perform process
     pool.connect().then(client => {
         up.updateCarparkInfo(client)

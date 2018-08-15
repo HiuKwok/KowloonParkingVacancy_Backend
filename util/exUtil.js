@@ -45,6 +45,14 @@ function shouldZip (req, res) {
     return compression.filter(req, res);
 }
 
+function malformedJsonHandler (err, req, res, next) {
+    if(err){
+        console.log(err);
+        res.status(400);
+        res.end();
+    }
+};
+
 
 
 module.exports = {
@@ -53,5 +61,6 @@ module.exports = {
     stdResponse200: stdResponse200,
     stdResponse500: stdResponse500,
     checkCType: checkCType,
-    shouldZip: shouldZip
+    shouldZip: shouldZip,
+    malformedJsonHandler: malformedJsonHandler,
 }
