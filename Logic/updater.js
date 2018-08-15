@@ -127,15 +127,28 @@ function updateCarparkInfo(client){
             let existCarpark = rowsToSet(v[0]);
             //Fetch latest list from Gov
             let newcarpark = getCarparkInfo(v[1], v[2], v[3]);
-            //Perform upsert operation
-            let insertion = gpInsert(client, existCarpark, newcarpark);
 
-            Promise.all([...insertion]).then( () =>{
-                console.log("Insertion size:" + insertion.length);
-                resolve(insertion.length);
-                //All promise done
-                //client.end();
-            }, () => {reject("Insertion fail")} );
+
+            //Begin transaction
+            client.query('BEGIN', (err) => {
+
+                if (err) { reject('Error begin transaction') };
+
+                //Perform upsert operation
+                let insertion = gpInsert(client, existCarpark, newcarpark);
+
+                Promise.all([...insertion]).then( () =>{
+                    client.query('COMMIT', (err) => {
+                        if (err) {
+                            reject('Error committing transaction');
+                        }else {
+                            console.log("Done commit!");
+                            resolve(insertion.length);
+                        }
+                    });
+
+                }, () => {reject("Insertion fail")} );
+            });
         }, () => {reject("Fetch info fail")} );
     });
 }
@@ -152,12 +165,25 @@ function updateVacancyInfo (client){
         Promise.all([v_exist, p2]).then((v) => {
 
             let exist = resultToMap(v[0]);
-            let recordToIn = needToInsert(client, v[1], exist);
 
-            Promise.all([...recordToIn]).then((v) => {
-                resolve(recordToIn.length);
+            client.query('BEGIN', (err) => {
 
-            }, () => {reject("Insertion fail")} );
+                if (err) { reject('Error begin transaction')};
+
+                let recordToIn = needToInsert(client, v[1], exist);
+
+                Promise.all([...recordToIn]).then((v) => {
+
+                    client.query('COMMIT', (err) => {
+                        if (err) {
+                            reject('Error committing transaction');
+                        }else {
+                            console.log("Done commit!");
+                            resolve(recordToIn.length);
+                        }
+                    });
+                }, () => {reject("Insertion fail")} );
+            });
         }, () => {reject("Fetch info fail")} );
     });
 

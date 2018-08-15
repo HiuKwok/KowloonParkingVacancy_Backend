@@ -45,12 +45,6 @@ app.get('/carparks/:id', function (req, res) {
         });
 });
 
-
-
-app.get('/test', function (req, res) {
-    exUtil.stdResponse500(res, "Wrong");
-});
-
 app.get('/vacancy', function (req, res) {
     up.getInfoFromGov()
         .then( (data) => { exUtil.stdResponse200(res, data);})
@@ -61,35 +55,30 @@ app.get('/vacancy', function (req, res) {
 });
 
 
-
 app.post('/carparks', function (req, res) {
 
     //Perform process
-    const client = new pg.Client(connectionString);
-    client.connect();
-
-    up.updateCarparkInfo(client)
-        .then( data => { exUtil.stdResponse201(res, data); })
-        .catch((err) => {
-            util.onRejectPrintMsg(err);
-            exUtil.stdResponse500(err);
-        })
-        .then(() => { client.end();});
+    pool.connect().then(client => {
+        up.updateCarparkInfo(client)
+            .then( data => { exUtil.stdResponse201(res, data); })
+            .catch((err) => { exUtil.stdResponse500(err);})
+            .then( () => {
+                console.log("Give it back anyway");
+                client.release();});
+    });
 });
-
 
 app.post('/vacancy', function (req, res) {
 
-    const client = new pg.Client(connectionString);
-    const con = client.connect();
-
-    up.updateVacancyInfo(client)
+    pool.connect().then(client => {
+        up.updateVacancyInfo(client)
         .then( data => { exUtil.stdResponse201(res, data); } )
-        .catch((err) => {
-            util.onRejectPrintMsg(err);
-            exUtil.stdResponse500(err);
-        })
-        .then(() => { client.end();});
+        .catch((err) => { exUtil.stdResponse500(err); })
+        .then( () => {
+            console.log("Give it back anyway");
+            client.release();});
+    });
+
 });
 
 
