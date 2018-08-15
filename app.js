@@ -5,6 +5,7 @@ const rp = require('request-promise');
 const up = require('./Logic/updater');
 const parser = require('./Logic/JSONStripper')
 const util = require('./Logic/util')
+const exUtil = require('./util/exUtil')
 const config = require('./config/main')
 var app = express();
 
@@ -19,8 +20,7 @@ const pool = new pg.Pool({
 app.get('/carparks', function (req, res) {
     up.getVacancyInfo(pool)
         .then( (data) => {
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(data) );
+            exUtil.stdResponse200(res, data);
         })
         .catch(util.onRejectPrintMsg);
 
@@ -30,24 +30,33 @@ app.get('/carparks', function (req, res) {
 app.get('/carparks/:id', function (req, res) {
     up.getVacancyInfoByID(pool, req.params.id)
         .then( (data) => {
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(data) );
+            if (data.length == 0 ){
+                exUtil.stdResponse404(res, "Given carpark ID not exist");
+            }else if (data.length == 1){
+                exUtil.stdResponse200(res, data);
+            } else {
+                exUtil.stdResponse500(res, "DB result abnormal");
+            }
         })
-        .catch(util.onRejectPrintMsg);
+        .catch( (err) => {
+            //TBC: Log error
+            util.onRejectPrintMsg(err);
+            exUtil.stdResponse500(res, "DB execution error");
+        });
 });
 
 
+
+app.get('/test', function (req, res) {
+    exUtil.stdResponse500(res, "Wrong");
+});
+
 app.get('/vacancy', function (req, res) {
     up.getInfoFromGov()
-        .then( (data) => {
-            res.setHeader('Content-Type', 'application/json');
-            res.status(200);
-            res.end(JSON.stringify(data) );
-        })
+        .then( (data) => { exUtil.stdResponse200(res, data);})
         .catch( (err) => {
             util.onRejectPrintMsg(err);
-            res.status(500);
-            res.end();
+            exUtil.stdResponse500(res, err);
         });
 });
 
@@ -55,34 +64,32 @@ app.get('/vacancy', function (req, res) {
 
 app.post('/carparks', function (req, res) {
 
-    //TBC: Send response with insert success
-    res.status(200);
-    res.end();
-
     //Perform process
     const client = new pg.Client(connectionString);
     client.connect();
 
     up.updateCarparkInfo(client)
-        .then( (v)=> console.log("Insert success: ", v))
-        .catch(util.onRejectPrintMsg)
+        .then( data => { exUtil.stdResponse201(res, data); })
+        .catch((err) => {
+            util.onRejectPrintMsg(err);
+            exUtil.stdResponse500(err);
+        })
         .then(() => { client.end();});
-
 });
 
 
 app.post('/vacancy', function (req, res) {
+
     const client = new pg.Client(connectionString);
     const con = client.connect();
 
     up.updateVacancyInfo(client)
-        .then( (v)=> console.log("Insert success: ", v))
-        .catch(util.onRejectPrintMsg)
-        .then(() => {
-            console.log("Shut down anyway");
-            client.end();});
-    res.status(200);
-    res.end();
+        .then( data => { exUtil.stdResponse201(res, data); } )
+        .catch((err) => {
+            util.onRejectPrintMsg(err);
+            exUtil.stdResponse500(err);
+        })
+        .then(() => { client.end();});
 });
 
 
@@ -104,8 +111,6 @@ function updateVacancy () {
  setInterval(updateVacancy, 1000*60*10);
 
 app.listen(3000, function (req, res) {
-    //Set header to JSON format(REST API)
-    //res.setHeader('Content-Type', 'application/json');
     console.log('Example app listening on port 3000!');
 });
 
