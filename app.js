@@ -9,6 +9,7 @@ const exUtil = require('./util/exUtil')
 const config = require('./config/main')
 const compression = require('compression')
 const methodOverride = require('method-override')
+const helmet = require('helmet')
 
 
 const app = express();
@@ -16,6 +17,8 @@ const app = express();
 
 
 //Middle ware
+
+app.use(helmet())
 //Exclude those request what explicitly ask for no compression.
 app.use(compression({filter: exUtil.shouldZip}));
 //Any POST call in would check override field
@@ -25,6 +28,7 @@ app.use(exUtil.checkCType);
 //Json
 app.use(express.json());
 app.use(exUtil.malformedJsonHandler);
+//Rate limiter
 app.use(exUtil.limiter);
 
 const connectionString = config.connectionString;
