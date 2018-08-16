@@ -10,6 +10,7 @@ const config = require('./config/main')
 const compression = require('compression')
 const methodOverride = require('method-override')
 const helmet = require('helmet')
+const morgan = require('morgan')
 
 
 const app = express();
@@ -17,6 +18,9 @@ const app = express();
 
 
 //Middle ware
+
+//Log first no matter what status
+app.use(morgan('combined'))
 
 app.use(helmet())
 //Exclude those request what explicitly ask for no compression.
