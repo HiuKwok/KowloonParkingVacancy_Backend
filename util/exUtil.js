@@ -2,6 +2,7 @@
 * Contain all util method which related to express.js, stuff like template response and such
 * */
 const compression = require('compression')
+const rateLimit = require('express-rate-limit');
 
 function stdResponse500 (res, r) {
     res.status(500);
@@ -53,6 +54,14 @@ function malformedJsonHandler (err, req, res, next) {
     }
 };
 
+let limiter = new rateLimit({
+    windowMs: 1000*60, //1 min
+    max: 1000, //1000 Request per min per IP
+    statusCode: 429,
+    delayMs: 0,
+    headers: true
+});
+
 
 
 module.exports = {
@@ -62,5 +71,6 @@ module.exports = {
     stdResponse500: stdResponse500,
     checkCType: checkCType,
     shouldZip: shouldZip,
+    limiter: limiter,
     malformedJsonHandler: malformedJsonHandler,
 }

@@ -10,6 +10,7 @@ const config = require('./config/main')
 const compression = require('compression')
 const methodOverride = require('method-override')
 
+
 const app = express();
 
 
@@ -24,6 +25,7 @@ app.use(exUtil.checkCType);
 //Json
 app.use(express.json());
 app.use(exUtil.malformedJsonHandler);
+app.use(exUtil.limiter);
 
 const connectionString = config.connectionString;
 
