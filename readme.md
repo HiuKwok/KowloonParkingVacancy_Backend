@@ -16,18 +16,7 @@ have ParkingID instead of the full name. How the hell I know what does parking i
     * ec2-18-179-111-191.ap-northeast-1.compute.amazonaws.com:3000
 
 #### Endpoint option
-* `GET /carparks`
-    * Return a JSON result which composite of Carpark Info && Vacancy Info over Gov endpoint.
-    * Gonna be slow it take like 2-3s -> this is motivation for this project as well. 
-* `GET /vacancy`
-    * Return a similar response as above, but getting data from DB instead, which would like 100-200ms 
-    at the moment. Schedule task would update vacancy db periodically. 
-
-* `POST /carparks`
-    * Instruct the node app to update carpark meta list from Gov src.
-
-* `POST /vacancy`
-    * Instruct the node app to update vacancy data from Gov src.
+* Information is available via [swagger](https://app.swaggerhub.com/apis/HiuKwok/ParkingSlot/0.4.0)
 
 #### Infrastructure 
 
