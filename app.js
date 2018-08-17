@@ -17,6 +17,7 @@ const config = require('./config/main')
 const up = require('./Logic/updater');
 const exUtil = require('./util/exUtil');
 const dbPool = require('./component/dbPool');
+const logger = require('./component/logger');
 
 
 
@@ -61,19 +62,22 @@ app.use('/vacancy', vacancy);
  }, 1000*50);
 
 app.listen(3000, function (req, res) {
-    console.log('Example app listening on port 3000!');
+    logger.info('Example app listening on port 3000!');
 });
 
 
 process.on('SIGINT', function () {
     pool.end().then(() => {
-        console.log('pool has ended');
+        logger.info('Pool has ended(SIGINT)');
         process.exit();
     });
 });
 
 
 process.on('exit', function() {
-    console.log("Shutdown Node app!");
-
+    pool.end().then(() => {
+        logger.info('Pool has ended(EXIT)');
+        process.exit();
+    });
+    logger.info('Shut down node, bye~');
 });
