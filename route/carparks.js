@@ -4,6 +4,7 @@
 
 
 const express = require('express');
+const logger = require('../component/logger');
 const db = require('../component/dbPool');
 const exUtil = require('../util/exUtil');
 const up = require('../Logic/updater');
@@ -46,7 +47,10 @@ router.post('/', function (req, res) {
     //Perform process
     db.pool.connect().then(client => {
         up.updateCarparkInfo(client)
-            .then( data => { exUtil.stdResponse201(res, data); })
+            .then( data => {
+                logger.info("Update carparks record with size: " + data);
+                exUtil.stdResponse201(res, data);
+            })
             .catch(exUtil.stdResponse500)
             .then( () => { client.release();});
     });

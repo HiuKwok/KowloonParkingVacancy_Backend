@@ -141,10 +141,7 @@ function updateCarparkInfo(client){
                     client.query('COMMIT', (err) => {
                         if (err) {
                             reject('Error committing transaction');
-                        }else {
-                            console.log("Done commit!");
-                            resolve(insertion.length);
-                        }
+                        }else {resolve(insertion.length);}
                     });
 
                 }, () => {reject("Insertion fail")} );
@@ -177,10 +174,7 @@ function updateVacancyInfo (client){
                     client.query('COMMIT', (err) => {
                         if (err) {
                             reject('Error committing transaction');
-                        }else {
-                            console.log("Done commit!");
-                            resolve(recordToIn.length);
-                        }
+                        }else { resolve(recordToIn.length); }
                     });
                 }, () => {reject("Insertion fail")} );
             });
@@ -243,7 +237,6 @@ function needToInsert (client, r, exist) {
 
         //Only insert when not match
         if (!exist.has(i.park_Id) || (exist.has(i.park_Id) && tsInMs != exist.get(i.park_Id) ) ){
-            console.log("Insert new vacancy record on [", i.park_Id, "]",  exist.get(i.park_Id), " -> ",  tsInMs);
            let pro = client.query(sqlInsertVacancy, values);
            insertion.push(pro);
         }

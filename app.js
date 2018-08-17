@@ -1,22 +1,26 @@
 const express = require('express');
-const request = require('request');
-const rp = require('request-promise');
-const up = require('./Logic/updater');
-const parser = require('./Logic/JSONStripper')
-const util = require('./Logic/util')
-const config = require('./config/main')
+
+//Middleware
 const compression = require('compression')
 const methodOverride = require('method-override')
 const helmet = require('helmet')
 const morgan = require('morgan')
-const dbPool = require('./component/dbPool');
-const exUtil = require('./util/exUtil');
+
+
+//Route
 const carparks = require('./route/carparks');
 const vacancy = require('./route/vacancy');
-const db = require('./component/dbPool');
+
+//Config
+const config = require('./config/main')
+//Custom module
+const up = require('./Logic/updater');
+const exUtil = require('./util/exUtil');
+const dbPool = require('./component/dbPool');
+
+
+
 const app = express();
-
-
 
 //Middle ware
 
@@ -50,11 +54,9 @@ app.use('/vacancy', vacancy);
 
 //Really really bad (temp setup)
  setInterval( () => {
-     db.pool.connect().then(client => {
+     pool.connect().then(client => {
          up.updateVacancyInfo(client)
-             .then( () => {
-                 console.log("Give it back anyway");
-                 client.release();});
+             .then(client.release);
      });
  }, 1000*5);
 
