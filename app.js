@@ -58,7 +58,7 @@ app.use('/vacancy', vacancy);
          up.updateVacancyInfo(client)
              .then(client.release);
      });
- }, 1000*5);
+ }, 1000*50);
 
 app.listen(3000, function (req, res) {
     console.log('Example app listening on port 3000!');

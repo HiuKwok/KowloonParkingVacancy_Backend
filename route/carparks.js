@@ -8,7 +8,7 @@ const logger = require('../component/logger');
 const db = require('../component/dbPool');
 const exUtil = require('../util/exUtil');
 const up = require('../Logic/updater');
-const util = require('../Logic/util')
+const util = require('../util/util')
 
 const router = express.Router();
 

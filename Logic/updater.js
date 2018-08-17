@@ -2,6 +2,7 @@
 * Feed data into DB by API Get call from Gov src.
 * */
 const rp = require('request-promise');
+const util = require('../util/util')
 const parser = require('./JSONStripper')
 
 const carparkEndpoint = 'https://api.data.gov.hk/v1/carpark-info-vacancy';
@@ -231,10 +232,7 @@ function needToInsert (client, r, exist) {
     r.results.forEach( i => {
         const values = [i.park_Id,  new Date(i.privateCar[0].lastupdate), i.privateCar[0].vacancy, "privateCar"];
 
-        //HKG == +8?
-        let offSet = (-1) * new Date().getTimezoneOffset() * 60000;
-        let tsInMs = (new Date(i.privateCar[0].lastupdate).getTime() + offSet) /1000;
-
+        let tsInMs = util.toHktTs(i.privateCar[0].lastupdate);
         //Only insert when not match
         if (!exist.has(i.park_Id) || (exist.has(i.park_Id) && tsInMs != exist.get(i.park_Id) ) ){
            let pro = client.query(sqlInsertVacancy, values);
@@ -254,12 +252,5 @@ module.exports = {
     getVacancyInfo: getVacancyInfo,
     getVacancyInfoByID: getVacancyInfoByID,
     getInfoFromGov: getInfoFromGov,
-
-
-//    Expose Endpoint for app.js to use atm (temparory)
-    carparkVacancy: carparkVacancy,
-     carparkInfoEn: carparkInfoEn,
-     carparkInfoZh: carparkInfoZh,
-     carparkInfoCn: carparkInfoCn,
 
 }
