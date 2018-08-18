@@ -16,7 +16,7 @@
  
 #### Other than Code 
 * __API doc__ is available via [swagger](https://app.swaggerhub.com/apis/HiuKwok/ParkingSlot/0.4.0)
-* The application itself is currently __hosted on [ec2](ec2-18-179-111-191.ap-northeast-1.compute.amazonaws.com:3000)__ with limited access at the moment for demonstration purpose
+* The application itself is currently __hosted on__ [ec2](http://ec2-18-179-111-191.ap-northeast-1.compute.amazonaws.com:3000) with limited access at the moment for demonstration purpose
 * Updated version of __docker images__ would be available once pipeline setup. 
   * In the mean static images is available [here](https://hub.docker.com/r/hiufkwok/hkparking-web-app/) 
 
